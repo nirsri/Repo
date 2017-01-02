@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
- * FOR TRIAL PURPOSES - CAN BE IGNORED
+ * FOR TRIAL PURPOSES-CAN BE IGNORED
  * This class is not related to the exercise
  * @author NS
  *
