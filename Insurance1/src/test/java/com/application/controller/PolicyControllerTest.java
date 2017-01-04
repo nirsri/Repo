@@ -1,6 +1,9 @@
 package com.application.controller;
 
 import static org.junit.Assert.*;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,12 +54,16 @@ public class PolicyControllerTest {
 	 * @throws JsonProcessingException
 	 */
 	@Test
-	public void testCreate() throws JsonProcessingException 
+	public void testAddPolicy() throws JsonProcessingException 
 	{
 		////////////////////////////////////////// 
 		String newPolicyNumber =  "HLT123123";
 		double premiumAmount = 100.00;
 		String holderId = "123";
+		String holderEmail = "abc@abc.com";
+		String holderFN = "Sree";
+		String holderLN = "Kripa";
+		String dob = "12/12/2012";
 		////////////////////////////////////////// 
 		 
 		log.info("Create Policy Info test case");
@@ -64,6 +71,15 @@ public class PolicyControllerTest {
 		//Creating holder and Policy objects for Create operation
 		AccountHolder holder = new AccountHolder();
 		holder.setId(holderId);
+		try {
+			holder.setDob(new SimpleDateFormat("dd/MM/yy").parse(dob));
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		holder.setFirstName(holderFN);
+		holder.setLastName(holderLN);
+		holder.setEmail(holderEmail);
 		Policy newPolicy = new Policy();		  
 		newPolicy.setPolicyNumber(newPolicyNumber);
 		newPolicy.setPremiumAmount(premiumAmount);
@@ -77,12 +93,15 @@ public class PolicyControllerTest {
 		HttpEntity<String> httpEntity =
 		    new HttpEntity<String> (OBJECT_MAPPER.writeValueAsString(newPolicy), requestHeaders);
 
+		log.info("*Req message::"+OBJECT_MAPPER.writeValueAsString(newPolicy));
+		
 		//WRITE NEW POLICY to DB (by invoking REST WS of controller class)
 		Map<String,Object> apiResponse =
 		     restTemplate.postForObject(path, httpEntity, Map.class, Collections.EMPTY_MAP);
-		
+		log.info(apiResponse.get("message"));
 		String message = apiResponse.get("message").toString();
 		log.info("Response message::"+message);
+		
 		
 		//check if message has value success
 		assertEquals("SUCCESS", message);
@@ -99,6 +118,8 @@ public class PolicyControllerTest {
 		log.info("The entry passed and object saved in db are equal"); 
 		  
 	}
+	
+
 	
 	/**
 	 * Tests policy deletion for PolicyRestController.
@@ -134,12 +155,16 @@ public class PolicyControllerTest {
 	 * Hardcoded values used & are to be changed while re-executing test
 	 * @throws JsonProcessingException
 	 */
-/*	@Test
+	@Test
 	public void testUpdate() throws JsonProcessingException {
 		//////////////////////////////////////////
 		String policyNumber =  "HLT123123";
 		double premiumAmount = 100.00;
 		String holderId = "123";
+		String holderEmail = "bcd@abc.com";
+		String holderFN = "SreeK";
+		String holderLN = "KripaK";
+		String dob = "12/12/2012";
 		//////////////////////////////////////////  
 		
 		log.info("Update Policy Info test case");
@@ -147,13 +172,22 @@ public class PolicyControllerTest {
 		//Creating holder and Policy to be updated
 		AccountHolder holder = new AccountHolder();
 		holder.setId(holderId);
+		holder.setFirstName(holderFN);
+		holder.setLastName(holderLN);
+		holder.setEmail(holderEmail);
+		try {
+			holder.setDob(new SimpleDateFormat("dd/MM/yy").parse(dob));
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		  
 		Policy policyWithUpdates = new Policy();
 		  
 		policyWithUpdates.setPolicyNumber(policyNumber);
 		policyWithUpdates.setPremiumAmount(premiumAmount);
 		policyWithUpdates.setAccountHolder(holder);
-		  
+		
 		HttpHeaders requestHeaders = new HttpHeaders();
 		requestHeaders.setContentType(MediaType.APPLICATION_JSON);
 
@@ -161,8 +195,9 @@ public class PolicyControllerTest {
 		HttpEntity<String> httpEntity =
 		      new HttpEntity<String>(OBJECT_MAPPER.writeValueAsString(policyWithUpdates), requestHeaders);
 
+		log.debug("********pol with updates" +OBJECT_MAPPER.writeValueAsString(policyWithUpdates));
 		//Invoking update operation via REST WS
-		Map<String, Object> apiResponse = (Map<String, Object>) restTemplate.exchange(path+policyNumber,
+		Map<String, Object> apiResponse = (Map<String, Object>) restTemplate.exchange(path,
 		    HttpMethod.PUT, httpEntity, Map.class, Collections.EMPTY_MAP).getBody();
 		assertNotNull(apiResponse);
 		assertTrue(!apiResponse.isEmpty());
@@ -174,12 +209,31 @@ public class PolicyControllerTest {
 
 		//checking DB and comparing if values are updated properly
 		Policy policyValFromDb=this.find(policyNumber);
-		assertTrue(2324.43==policyValFromDb.getPremiumAmount());
+		assertTrue(premiumAmount==policyValFromDb.getPremiumAmount());
 		log.info("policy amount updated is equal to passed"); 
 		assertEquals(holderId, policyValFromDb.getAccountHolder().getId());
 		  
-		log.info("The entry passed and object updated in db are equal"); 
+		log.info("The entry passed and object updated in db are equal");
+		
 	}
 
-	*/
+	@Test
+	public void testGetPolicyDetails()
+	{
+		log.info("Find Policy test case");
+		////////////////////////////////
+		String policyNumberExisting = "HLT123123";
+		String policyNumberNonExisting ="XXXXXXXX";
+		///////////////////////////////
+
+		//Invoking READ operation (via rest ws)
+		Policy policyValFromDb = this.find(policyNumberExisting);
+		assertNotNull(policyValFromDb);
+		
+		policyValFromDb = this.find(policyNumberNonExisting);
+		assertNull(policyValFromDb);
+		
+		
+		log.info("Find test completed");
+	}
 }

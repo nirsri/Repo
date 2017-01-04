@@ -17,6 +17,7 @@ import com.application.model.AccountHolder;
 import com.application.model.Policy;
 import com.application.repository.AccountHolderRepository;
 import com.application.repository.PolicyRepository;
+import com.application.validator.ValidPolicy;
 
 /**
  * 
@@ -65,13 +66,26 @@ public class PolicyRestController {
 	 * To create a policy in DB. Checks if holder id passed in JSON actually exists. 
 	 * If it does not exist, holder is also created
 	 * If it exists already, then the holder id is set in the policy collection (holder will not be updated)
+	 * Does not error out if existing policy is inserted - does no action & returns success
 	 * @param policy to be passed as JSON
 	 * @return a Map object with 2 entries - 1st is <message, message-text> , 2nd is <policy, policy object from DB>
 	 */
 	@RequestMapping(method=RequestMethod.POST)
-	public  @ResponseBody  Map<String, Object> addPolicy(@RequestBody Policy policy) 
+	public  @ResponseBody  Map<String, Object> addPolicy(@RequestBody Policy policy)  
 	{
+		log.info("Entered addPolicy method");
 		Map<String, Object> response = new LinkedHashMap<String, Object>();
+		////////////////////Validate policy and holder details///////////////////////////
+		ValidPolicy vPolicy = new ValidPolicy(policy);
+		try {
+			vPolicy.validatePolicy();
+		} catch (Exception e) {
+			response.put("message", e.getMessage());
+			return response;
+		}
+		///////////////////////////////////////////////
+		
+		
 		AccountHolder holder = holderRepository.findOne(policy.getAccountHolder().getId());
 		if(holder==null)
 		{
@@ -94,6 +108,7 @@ public class PolicyRestController {
 	
 	/**
 	 * Deletes policy and returns success after deletion
+	 * Does not delete related account holder as it may be associated to other policies
 	 * @param policyId to be passed in URL as path variable
 	 * @return hash map containing message
 	 */
@@ -117,10 +132,22 @@ public class PolicyRestController {
 	 * @return
 	 */
 	@RequestMapping(method=RequestMethod.PUT)
-	public  Map<String, Object>  update(@RequestBody Policy policy) 
+	public  Map<String, Object>  update(@RequestBody Policy policy)  
 	{
-		Policy dbPolicy = policyRepository.findOne(policy.getPolicyNumber());
+		log.info("********INSIDE UPDATE*********");
 		Map<String, Object> response = new LinkedHashMap<String, Object>();
+		////////////////////Validate policy and holder details///////////////////////////
+		ValidPolicy vPolicy = new ValidPolicy(policy);
+		try {
+			vPolicy.validatePolicy();
+		} catch (Exception e) {
+			response.put("message", e.getMessage());
+			return response;
+		}
+		///////////////////////////////////////////////
+		
+		Policy dbPolicy = policyRepository.findOne(policy.getPolicyNumber());
+		
 		if(dbPolicy!=null)
 		{
 		    dbPolicy.setPolicyNumber(policy.getPolicyNumber());
